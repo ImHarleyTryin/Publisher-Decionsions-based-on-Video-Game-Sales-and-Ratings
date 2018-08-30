@@ -1,0 +1,40 @@
+---
+title: "Publisher Decisions based on Video Game Sales and Ratings"
+author: "George Harley Mejia"
+date: "August 30, 2018"
+output: html_document
+---
+
+##What is the problem?
+To what extent should publishers finance and market certain games based on genre, regional sales and the history of the developer's previosly released games on metacritic.com.
+  
+##Who wants to know?
+The clients for this project are the publishers that finance and market the games that developers pitch to them.
+  
+##What should publishers expect to learn from this analysis?
+Based on the analysis, publishers might choose to be more or less selective of:
+
+  * The genres of games they finance.
+  * The developers they work with.
+  * The level of marketing that should be done to promote games based on genre and regional sales.
+  * Trends in the growing gamer industry and gamer demographic.
+  
+##What data will used for this analysis?
+The dataset used for this analysis comes from kaggle.com and is titled ["Video Game Sales with Ratings"](https://www.kaggle.com/rush4ratio/video-game-sales-with-ratings). The dataset includes data from video games that have sold more than 100,000 copies and that were released up until 2016. Notable variables in the dataset include:
+
+* Publisher
+* The sales figures from three major regions
+* Global sales
+* Genre
+* Developer
+* Critic scores
+* User scores
+
+##What approach will be used?
+The approach used to find how publishers should best select which games they publish and to what extent to market those games is to analyze how well games of certain genres sell and score with critics and users compared to others.Also, an analysis of the sales and scores of each genre of game over time (from the 1980s to 2016) could show trends in the gaming industry and the gaming demographic.
+
+##What are the deliverables?
+* R code used in the analyses of the data.
+* A report of the findings.
+* A slide deck that gives an overview of the project.
+
