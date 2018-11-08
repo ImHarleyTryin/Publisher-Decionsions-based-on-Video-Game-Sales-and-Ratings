@@ -1,0 +1,98 @@
+---
+title: "Cleaning Video Game Data"
+author: "George Harley Mejia"
+date: "November 7, 2018"
+output: html_document
+---
+
+
+## View and summarise the data to identify problems
+
+```{r}
+# load libraries
+library(tidyverse)
+library(robotstxt)
+library(rvest)
+
+# Read the csv files for the dataset.
+Video_Games_Data <- read.csv("Video_Games_Data.csv", na.strings = c("", "NA"))
+
+# View the data to help locate any missing values in key variables.
+View(Video_Games_Data)
+summary(Video_Games_Data)
+
+```
+  First, the initial data set (Video_Games_Data) csv file was loaded, viewed, and summarised to identify any noticable outliers or missing values. There were a substantial number of missing values for key variables in our analysis that needed to be cleaned. Furthermore, upon inspection of a handful of randomly selected observations, it was found that some had missing values for the critic score and user score variables that should be available on the website the data was originally scraped from. Cross-reference of Metacritic.com reveal that the web pages where the data was found did in fact had data for the missing values.
+
+## Web Scrape Metacritic
+```{r}
+# Read the csv files for the dataset.
+Meta_Critic_Data <- read.csv("meta_critic_data.csv")
+
+# View the data to help locate any missing values in key variables.
+View(Meta_Critic_Data)
+summary(Meta_Critic_Data)
+```
+  With the issues identified, the next step was a web scrape of the Metacritic website to gather as many of the missing values for the critic score and the user score as possible. The web scrape resulted in a csv file with the variables Name, Platform, Critic_Score, and User_Score, which was then loaded into the workspace (Meta_Critic_Data). 
+
+## Join both data sets to include new variables
+```{r}
+# Join the original data set with the new scraped meta critic scores.
+Clean_Video_Games_Data <- left_join(Video_Games_Data, Meta_Critic_Data, by= c("Name", "Platform"))
+summary(Clean_Video_Games_Data)
+```
+
+  Then, both data sets were joined by a left join with Video_Games_Data on the left and Meta_Critic_Data on the right with the “by” argument equal to the Name and Platform variables. The join resulted in a new data set (Clean_Video_Games_Data) which contained all observations and variables from the Video_Games_Data table and the Critic_Score and User_Score variables from the Meta_Critic_Data table. 
+
+## The next issue that needed to be cleaned were the missing values. 
+#### Change "tbd" to "NA"
+```{r}
+# Summary of the newly joined data set shows about 2400 observations in the User score variable are classified as "tbd".
+# All the "tbd" observations in the User_Score.x variable should be changed to "NA" because they are essentially missing values in the data.
+Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == "tbd"] <- ""
+
+```
+
+  First, the user scores from the Video_Games_Data table (User_Score.x) had a special character called “tbd” which means “to be determined” on the Metacritic website and is given to games that haven’t yet been rated, but will. The values with “tbd” are essentially the same as if that observation had a missing value, so all instances of the character “tbd” were changed to a missing value, or an NA.
+  
+### Replace any older or missing values with the newer scraped values
+```{r}
+# Replace any values or NA's in the previous critic and user scores with any newer values.
+Clean_Video_Games_Data$Critic_Score.x <- ifelse(is.na(Clean_Video_Games_Data$Critic_Score.y), Clean_Video_Games_Data$Critic_Score.x, Clean_Video_Games_Data$Critic_Score.y)
+Clean_Video_Games_Data$User_Score.x <- ifelse(is.na(Clean_Video_Games_Data$User_Score.y), Clean_Video_Games_Data$User_Score.x, Clean_Video_Games_Data$User_Score.y)
+# Summary shows that about 260 and 330 NA's from the critic and user scores were replaced, respectively.
+
+```
+
+  Next, any older values or missing values the Critic_Score.x and User_Score.x variables (from Video_Games_Data) are replaced by any values that aren’t missing from the Critic_Score.y and User_Score.y variables (from Meta_Critic_Data) using an ifelse function. Unfortunately, this only results in about 300 observations of missing values to be replaced with new values for both variables.
+  
+### Filter out any missing values for important variables
+```{r}
+# Starting with filtering the missing values from the user scores
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(User_Score.x))
+# Summary shows that by filtering out the NA's for user scores first leaves 572, 263, and 343 NA's for critic score, developer, and rating, respectively, with 7923 observations remaining.
+
+# Filter the missing values from critic scores.
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(Critic_Score.x))
+# Filtering the missing values from both leaves 256 and 327 NA's for developer and rating, respectively, with 7351 observations remaining. 
+
+# Further filtering the data set by rating will remove all missing values from key variables.
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(Rating))
+```
+
+  Next, the rest of the missing values of key variables in the data set need to be filtered out. Of the six variables that still contain missing values only four are important to our analysis: User_Score.x, Critic_Score.x, Developer, and Rating. Filtering out the missing values from User_Score.x, Critic_Score.x, and Rating is enough to eliminate all of the missing values from the key variables. 
+  
+### Remove extraneous variables and rename essential variables
+```{r}
+# Remove extraneous variables: Critic_Score.y and User_Score.y
+Clean_Video_Games_Data <- subset(Clean_Video_Games_Data, select = -c(Critic_Score.y, User_Score.y))
+
+# Finish cleaning up by changing Critic_Score.x and User_Score.x to Critic_Score and User_Score, respectively.
+colnames(Clean_Video_Games_Data)[11] <- "Critic_Score"
+colnames(Clean_Video_Games_Data)[13] <- "User_Score"
+```
+
+  Finally, the extraneous variables Critic_Score.y and User_Score.y are removed from the data and the variables Critic_Score.x and User_Score.x are renamed into Critic_Score and User_Score, respectively. The final cleaned data set contains 7024 observations.
+
+
+
