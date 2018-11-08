@@ -1,0 +1,60 @@
+# load libraries
+library(tidyverse)
+library(robotstxt)
+library(rvest)
+
+# Read the csv files for the dataset.
+Video_Games_Data <- read.csv("Video_Games_Data.csv", na.strings = c("", "NA"))
+
+# View the data to help locate any missing values in key variables.
+View(Video_Games_Data)
+summary(Video_Games_Data)
+
+# webscraping metacritic video game data 
+
+# Read the csv files for the dataset.
+Meta_Critic_Data <- read.csv("meta_critic_data.csv")
+
+# View the data to help locate any missing values in key variables.
+View(Video_Games_Data)
+summary(Video_Games_Data)
+View(Meta_Critic_Data)
+summary(Meta_Critic_Data)
+
+# Join the original data set with the new scraped meta critic scores.
+Clean_Video_Games_Data <- left_join(Video_Games_Data, Meta_Critic_Data, by= c("Name", "Platform"))
+summary(Clean_Video_Games_Data)
+
+# Summary of the newly joined data set shows about 2400 observations in the User score variable are classified as "tbd".
+# All the "tbd" observations in the User_Score.x variable should be changed to "NA" because they are essentially missing values in the data.
+Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == "tbd"] <- ""
+
+# Replace any values or NA's in the previous critic and user scores with any newer values.
+Clean_Video_Games_Data$Critic_Score.x <- ifelse(is.na(Clean_Video_Games_Data$Critic_Score.y), Clean_Video_Games_Data$Critic_Score.x, Clean_Video_Games_Data$Critic_Score.y)
+Clean_Video_Games_Data$User_Score.x <- ifelse(is.na(Clean_Video_Games_Data$User_Score.y), Clean_Video_Games_Data$User_Score.x, Clean_Video_Games_Data$User_Score.y)
+summary(Clean_Video_Games_Data)
+# Summary shows that about 260 and 330 NA's from the critic and user scores were replaced, respectively.
+
+# Begin filtering out missing values for key variables in the dataset -- Critic scores, User scores, Developers, and Ratings.
+
+# Starting with filtering the missing values from the user scores
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(User_Score.x))
+summary(Clean_Video_Games_Data)
+# Summary shows that by filtering out the NA's for user scores first leaves 572, 263, and 343 NA's for critic score, developer, and rating, respectively, with 7923 observations remaining.
+
+# Filter the missing values from critic scores.
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(Critic_Score.x))
+summary(Clean_Video_Games_Data)
+# Filtering the missing values from both leaves 256 and 327 NA's for developer and rating, respectively, with 7351 observations remaining. 
+
+# Further filtering the data set by rating will remove all missing values from key variables.
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(Rating))
+summary(Clean_Video_Games_Data)
+# Summary shows that the final data set includes 7024 observations.
+
+# Remove extraneous variables: Critic_Score.y and User_Score.y
+Clean_Video_Games_Data <- subset(Clean_Video_Games_Data, select = -c(Critic_Score.y, User_Score.y))
+
+# Finish cleaning up by changing Critic_Score.x and User_Score.x to Critic_Score and User_Score, respectively.
+colnames(Clean_Video_Games_Data)[11] <- "Critic_Score"
+colnames(Clean_Video_Games_Data)[13] <- "User_Score"
