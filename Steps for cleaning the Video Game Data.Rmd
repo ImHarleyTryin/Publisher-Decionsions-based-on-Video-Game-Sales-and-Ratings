@@ -9,6 +9,8 @@ output: html_document
 ## View and summarise the data to identify problems
 
 ```{r}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+
 # load libraries
 library(tidyverse)
 library(robotstxt)
@@ -49,7 +51,7 @@ summary(Clean_Video_Games_Data)
 ```{r}
 # Summary of the newly joined data set shows about 2400 observations in the User score variable are classified as "tbd".
 # All the "tbd" observations in the User_Score.x variable should be changed to "NA" because they are essentially missing values in the data.
-Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == "tbd"] <- ""
+Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == "tbd"] <- "NA"
 
 ```
 
