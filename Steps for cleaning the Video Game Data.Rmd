@@ -51,7 +51,7 @@ summary(Clean_Video_Games_Data)
 ```{r}
 # Summary of the newly joined data set shows about 2400 observations in the User score variable are classified as "tbd".
 # All the "tbd" observations in the User_Score.x variable should be changed to "NA" because they are essentially missing values in the data.
-Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == "tbd"] <- "NA"
+Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == "tbd"] <- NA
 
 ```
 
@@ -87,7 +87,7 @@ Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(Rating))
 ### Remove extraneous variables and rename essential variables
 ```{r}
 # Remove extraneous variables: Critic_Score.y and User_Score.y
-Clean_Video_Games_Data <- subset(Clean_Video_Games_Data, select = -c(Critic_Score.y, User_Score.y))
+Clean_Video_Games_Data <- select(Clean_Video_Games_Data, -c(Critic_Score.y, User_Score.y))
 
 # Finish cleaning up by changing Critic_Score.x and User_Score.x to Critic_Score and User_Score, respectively.
 colnames(Clean_Video_Games_Data)[11] <- "Critic_Score"
