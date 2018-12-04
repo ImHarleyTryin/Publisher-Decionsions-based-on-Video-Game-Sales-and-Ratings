@@ -1,0 +1,184 @@
+---
+title: "Capstone Statistical Analysis"
+author: "George Harley Mejia"
+date: "December 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+```
+
+```{r}
+#load libraries
+library(tidyverse)
+
+# Read csv file
+Clean_Video_Games_Data <- read_csv2("Clean_Video_Games_Data.csv")
+
+# View the structure of the data
+str(Clean_Video_Games_Data)
+```
+## Counts for Key Variables
+  To start the statistical analysis, counts of possibly important categorical variables were made through bar plots to show how the data is divided according to each. The bar plot for the “Rating” variable, which is the ESRB rating for each game, showed that most games in the data set were either rated T for teens (ages 13 and up) or E for everyone (any age). This result was expected as most video games are given these ratings to have the largest possible audience.
+```{r}
+## Counts for variables
+ggplot(Clean_Video_Games_Data, aes(x = Rating)) +
+  geom_bar(fill = "Dark Green") +
+  geom_text(stat = "count", aes(label = ..count.., vjust = -1))
+```
+
+  Next, the bar plot for the “Year_of_Release” variable, which gives the year that each game title was released, showed that most games in the data set appear at an increasing rate between 2000-2007 and decreased from 2008-2016. This bar plot could mean that there is a possible trend with the rising volume of game sales between 2000-2007 and/or the decline in the volume of game sales between 2008-2016. It is also possible that this bar plot could reflect a behavior of consumer frugality as critical reviews of video games become more available and popularized by websites such as Youtube and Metacritic.
+```{r}
+ggplot(Clean_Video_Games_Data, aes(Year_of_Release)) +
+  geom_bar(fill = "Dark Green") +
+  geom_text(stat = "count", aes(label = ..count.., vjust = -1))
+```
+
+  Next, the “Genre” variable, which gives the main genre that each game is categorized under, showed that the action genre is by far the most abundant in the data set and is 700 observations more than the next most abundant genre, sports, which is then followed by shooter, role-play, racing, etc. The top 5 genres in the data set could be considered to be games that have a faster pace than other genres, such as, strategy, simulation and puzzle. This could possible mean that more consumers tend to buy games with a faster pace.
+```{r}
+ggplot(Clean_Video_Games_Data, aes(x = Genre)) +
+  geom_bar(fill = "Dark Green") +
+  geom_text(stat = "count", aes(label = ..count.., vjust = -1))
+```
+
+  When this bar plot for genre is filled by the variable for rating, the ratios for each rating is shown within each genre. An interesting observation in this plot is that each genre tends to mostly comprise of one or two ratings for the majority of its games. For example, 75% of the action genre is either rated T (13+) or M (18+) which are the two highest maturity ratings available in our data set. 
+```{r}
+# bar plot of genres filled by ratings
+ggplot(Clean_Video_Games_Data, aes(x = Genre, fill = Rating)) +
+  geom_bar()
+```
+
+  Ultimately, these bar graphs are mostly to gain a sense for the categorical variables that could become important for predicting sales figures or critic scores.
+
+## Exploratory Plotting
+  Possibly the most important variables to gain information from are the “Global_Sales”, “Critic_Score”, and “User_Score” as they are the variables that need to later be predicted. First, a dot plot of the “Critic_Score”, which give the scores of professional video game critics out of 100, and “Global_Sales”, which give the global sales figures in millions of copies sold, is produced. The plot shows that a vast majority of observations are well below five million in global sales, however, the observations that are above five million in global sales are also mostly all above a critic score of 50. This observation suggests that games with a higher critic score tend to sell more copies, which was expected. 
+```{r}
+## dot plot of critic scores and global sales
+# shows that a majority of the global sales are below 10 million copies; E & M ratings have more than a few above 10.
+ggplot(Clean_Video_Games_Data, aes(Critic_Score, Global_Sales)) +
+  geom_jitter(alpha = 0.25, col = "blue")
+```
+
+  Next, two boxplots were made using “Rating” with either “Critic_Score” or “User_Score”. Both boxplots show that critics and users tend to score games with a M rating higher than others according to the medians of the interquartile range, however, critics also highly scored games with an E rating, while users also highly scored games with a T rating. The interquartile range for all of the rating in both boxplots were relatively the same range around their medians. Therefore, the higher medians suggest that users possibly prefer games with a higher maturity rating overall.
+```{r}
+# box plot of Rating by Critic score and User score
+ggplot(Clean_Video_Games_Data, aes(Rating, Critic_Score)) +
+  geom_boxplot(alpha = 0.25) +
+  coord_flip()
+ggplot(Clean_Video_Games_Data, aes(Rating, User_Score)) +
+  geom_boxplot(alpha = 0.25) +
+  coord_flip()
+```
+
+  Similarly, two more boxplots were made using critic and user scores to measure the ratings for genre. The boxplot for critic scores show that the top three highest scoring genres for critics are sports, strategy, and puzzle, according to the medians. While the boxplot for user scores show that the top three highest scoring genres for users are role-play, strategy, and platform, according to the medians.
+```{r}
+# box plot of Genre by Critic score and User score
+# the highest rated genres, according to the median, are sports, strategy, shooter, role-playing and puzzle.
+ggplot(Clean_Video_Games_Data, aes(Genre, Critic_Score)) +
+  geom_boxplot(alpha = 0.25) +
+  coord_flip()
+ggplot(Clean_Video_Games_Data, aes(Genre, User_Score)) +
+  geom_boxplot(alpha = 0.25) +
+  coord_flip()
+```
+
+  These are interesting plots because the genre that is most prevalent in the data set, action, scores relatively low in both cases, while the genres that are least represented in the data set, strategy and puzzle, score relatively well. This could possibly suggest that although a genre of game scores well with critics or users, does not mean it will necessarily sell more than certain faster-paced genres, such as action.
+
+## Linear Relationship & Time Series  
+  It was already observed how “Critic_Score” and “User_Score” interacted with “Global_Sales”, but it is important to understand the relationship between these key variables and how they change over time. A simple dot plot using both user and critic score along with a linear model shows a strong positive relationship between both variables. This result is expected because, while critics and users can have differing scores for certain games, generally, their views are not complete polar opposites.
+```{r}
+# dot plot of critic score and user score, linear model shows the positive relationship between both variables
+# the majority of observations for both critic and user scores are above 5.0
+ggplot(Clean_Video_Games_Data, aes(Critic_Score, User_Score)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(method = lm)
+```
+
+  While critics and users rarely have completely opposing views on most games, they can have varying degrees of preferences when critiquing video games. To observe these trends, “Critic_Score” and “User_Score” were plotted against time to create a time series plot using “Year_of_Release”. First, “Critic_Score” was used to create a time series plot and showed that median critic scores have remained relatively closed to 75 since 2000 with only slight dips below average between 2006-2008.
+```{r}
+# time series of critic scores, significant years between 2000-2016
+# shows that since 2000 critic scores have hovered around a median score of 75
+ggplot(Clean_Video_Games_Data, aes(Year_of_Release, Critic_Score)) +
+  geom_boxplot(alpha = 0.25)
+```
+
+  Meanwhile, the time series plot for “User_Score” shows a slight increase in median scores up to about 80 until 2003 when median scores decreased well below 75 and stay low through 2016. These time series plots show that while critic scores remain relatively the same, user scores have gradually decreased since 2003.
+```{r}
+# time series of user scores, significant years between 2000-2016
+# shows that since 2000 median user scores have decreased over time 
+ggplot(Clean_Video_Games_Data, aes(Year_of_Release, User_Score)) +
+  geom_boxplot(alpha = 0.25)
+```
+
+  An interesting observation that can be made with the “User_Score” time series plot and the bar plot for “Year_of_Realease” is that after 2003, when the median user score begins to decrease, the number of games in the data set for each year of release is still rising. This seems contradictory to previous assumptions that lower user scores should mean less of an abundance of game titles for those years.
+
+## Developer Dummy Variable  
+  Another key categorical variable in the data set is the “Developer” variable, which lists the developer(s) that created each game title. It is important to analyze developer trends and records because producers (the client) have a vested interest in knowing whether to finance games that developers pitch. For that reason, a dummy variable was created that indicates whether a game was developed by a studio that is within the top 20 developers according to average global sales of their games.
+```{r}
+# It might be interesting to find the top 20 developers according to average global sales.
+  
+## find the top 20 devlopers
+Avg_Dev_Sales <- Clean_Video_Games_Data %>% 
+  group_by(Developer) %>% 
+  summarise(Top_Devs = mean(Global_Sales))
+
+order(Avg_Dev_Sales$Top_Devs, decreasing = TRUE)
+# Check the ordered table for any duplicates or outliers; identify the top 20 developers.
+
+# Create a categorical variable that shows the top 20 developers
+Top_20 <- c("Polyphony Digital", "DMA Design, Rockstar North", "Infinity Ward, Sledgehammer Games", "Treyarch, Sledgehammer Games", "Nintendo EAD Tokyo", "Nintendo, Namco Bandai Games", "Nintendo, Nd Cube", "Nintendo, Spike Chunsoft", "Nintendo, Nintendo Software Technology", "Tantalus Interactive, Tantatus, Nintendo", "Nintendo, Headstrong Games", "Nintendo, Camelot Software Planning", "Nintendo, Intelligent Systems", "Next Level Games, Nintendo", "Bungie Software, Bungie", "Bungie Software", "Naughty Dog, SCE/WWS", "Naughty Dog, Sony Bends", "Retro Studios, Entertainment Analysis & Development Division", "Bethesda Game Studios", "Rockstar Toronto, Rockstar Leeds", "Splash Damage, The Coalition", "SCE/WWS, Media Molecule", "Media Molecule, United Front Games", "Level 5, Brownie Brown", "Treyarch, Shaba Games", "EA DICE, Danger Close", "Rockstar North", "Sledgehammer Games", "Infinity Ward", "Nintendo", "Bungie", "343 Industries", "Game Freak", "Naughty Dog", "Retro Studios", "Bethesda Softworks", "Turn 10", "Rockstar Leeds", "The Coalition", "Nd Cube", "Media Molecule", "Level 5", "Treyarch", "EA DICE", "WB Games Montreal")
+
+Clean_Video_Games_Data <- mutate(Clean_Video_Games_Data, Top_20_Devs = ifelse(Developer %in% Top_20, 1, 0))
+```
+
+  After creating a dummy variable of the top 20 developers, which only account for 4.14% of the total games in the data set, a dot plot similar to the first in the analysis is made using “Global_Sales” and “Critic_Score”, along with the dummy variable as the color aesthetic. The dot plot now shows which observations belong to the top 20 developers and clearly show that most of those observations have at least a 50 critic score and are among the observations with the highest global sales.
+```{r}
+## Counts for new categorical variable
+Clean_Video_Games_Data %>% group_by(Top_20_Devs) %>% count()
+# Games made by the top 20 developers only account for 4.14% of total games in the data set.
+
+## plots with Top 20 developers
+ggplot(Clean_Video_Games_Data, aes(Critic_Score, Global_Sales, col = Top_20_Devs)) +
+  geom_jitter(alpha = 0.5)
+```
+
+  To further this point, another dot plot is made with just the “Global_Sales” and “Top_20_Devs” variables. While the observations in the top 20 developers group are dispersed thoroughly among the global sales, observations from other developers seems to be clustered at or below the 1 million copies mark (a mild to moderate success for game sales).
+```{r}
+ggplot(Clean_Video_Games_Data, aes(x = Top_20_Devs, y = Global_Sales)) +
+  geom_jitter(alpha = 0.5)
+# Plot shows that games by devs not in the top 20 are heavly clustered at about 1 million in global sales, while games by top 20 devs are much more varied.
+```
+
+  A count reveals that 70.1% of games by developers in the top 20 sell at least one million copies, while only 16.73% of games made by other developers do the same. This result is expected as the dummy variable was made up of the developers whose games sold more copies on average.
+```{r}
+Clean_Video_Games_Data %>% group_by(Top_20_Devs) %>% count(Global_Sales >= 1)
+# 70.1% of games by devs in the top 20 sell at least 1 million copies, while only 16.73% of games made by other devs sell at least 1 million copies.
+```
+
+  However, the dummy variable can be used to show the difference in critical reception between the two groups. A critic score of 80 or more (a user score of 8.0 or more) is considered a critical success by industry standards. A dot plot using the “Critic_Score” and “Top_20_Devs” variables shows that more than half of the observations from the group in the top 20 developers is over an 80 critic score.
+```{r}
+ggplot(Clean_Video_Games_Data, aes(x = Top_20_Devs, y = Critic_Score)) +
+  geom_jitter(alpha = 0.5)
+# A critic score of 80 or more is considered a critical success by industry standards.
+```
+
+  A count reveals that 64.95% of games by developers in the top 20 score an 80 or above with critics, while only 26.36% of games made by other developers score the same.
+```{r}
+Clean_Video_Games_Data %>% group_by(Top_20_Devs) %>% count(Critic_Score >= 80)
+# 64.95% of games by devs in the top 20 score an 80 or above with critics, while only 26.36% of games by other devs score at least an 80.
+```
+
+  Similarly, a dot plot with “Top_20_Devs” and “User_Score” shows a more varied plot.
+```{r}
+ggplot(Clean_Video_Games_Data, aes(x = Top_20_Devs, y = User_Score)) +
+  geom_jitter(alpha = 0.5)
+# plot shows that users tend to score a game more harshly than critics as more games by the top 20 developers are more frequently below 50.
+```
+
+  A count reveals that 46.39% of games by developers in the top 20 score an 8.0 or above with users, while only 34.19% of games by other developer score the same. This a very interesting observation because users are more critical of games by the top 20 developers, while critics are more critical of games by other developers.
+```{r}
+Clean_Video_Games_Data %>% group_by(Top_20_Devs) %>% count(User_Score >= 8.0)
+# 46.39% of games by devs in the top 20 score an 8.0 or above with users, while only 34.19% of games by other devs score at least an 80.
+```
+
