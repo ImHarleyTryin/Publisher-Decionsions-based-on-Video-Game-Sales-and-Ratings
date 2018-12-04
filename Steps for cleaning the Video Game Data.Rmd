@@ -92,9 +92,24 @@ Clean_Video_Games_Data <- select(Clean_Video_Games_Data, -c(Critic_Score.y, User
 # Finish cleaning up by changing Critic_Score.x and User_Score.x to Critic_Score and User_Score, respectively.
 colnames(Clean_Video_Games_Data)[11] <- "Critic_Score"
 colnames(Clean_Video_Games_Data)[13] <- "User_Score"
+
+# Upon further inspection, the rating "K-A" is outdated and officially became "E" according to the ESRB.
+Clean_Video_Games_Data %>% filter(Rating == "K-A")
+Clean_Video_Games_Data$Rating[Clean_Video_Games_Data$Rating == "K-A"] <- "E"
+
+# The rating "RP" stands for rating pending and is not helpful in our dataset
+Clean_Video_Games_Data %>% filter(Rating == "RP")
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!Rating == "RP")
+
+# There is a special circumstance for the unique "AO" rating in the dataset that should change to an "M" rating.
+Clean_Video_Games_Data %>% filter(Rating == "AO")
+Clean_Video_Games_Data$Rating[Clean_Video_Games_Data$Rating == "AO"] <- "M"
+
+# Remove the outlier for global sales "Wii Sports"
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!Name == "Wii Sports")
 ```
 
-  Finally, the extraneous variables Critic_Score.y and User_Score.y are removed from the data and the variables Critic_Score.x and User_Score.x are renamed into Critic_Score and User_Score, respectively. The final cleaned data set contains 7024 observations.
+  Finally, the extraneous variables Critic_Score.y and User_Score.y are removed from the data and the variables Critic_Score.x and User_Score.x are renamed into Critic_Score and User_Score, respectively. The rating "K-A" is outdated according to the ESRB so the rating is changed to "E". The rating "RP" stands for rating pending and is not helpful in the data set and is removed. The single observation that is rated "AO" is a special circumstance and should be changed to an "M" rating. The game "Wii Sports" is a special outlier that should be removed from the data set becuase is a bundgled game. The final cleaned data set contains 7021 observations.
 
 
 
