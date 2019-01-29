@@ -2,7 +2,7 @@
 title: "Capstone Model Selection"
 author: "George Harley Mejia"
 date: "January 28, 2019"
-output: html_document
+output: rmarkdown::github_document
 ---
 
 ```{r setup, include=FALSE, }
