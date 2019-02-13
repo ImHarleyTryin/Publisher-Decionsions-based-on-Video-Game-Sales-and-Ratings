@@ -2,26 +2,38 @@
 title: "Capstone Model Selection"
 author: "George Harley Mejia"
 date: "January 28, 2019"
-output: rmarkdown::github_document
+output: html_document
 ---
 
-```{r setup, include=FALSE, }
+```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
+```{r, include=FALSE, warning=FALSE}
 ## Install and load neccessary packages
 library(caTools)
 library(tidyverse)
 library(caret)
 library(car)
+library(plotly)
+```
+
+
 
 ```{r}
 Clean_Video_Games_Data <- read.csv2("Clean_Video_Games_Data.csv")
 
+## Create a Co-Developer column
+Clean_Video_Games_Data <- separate(Clean_Video_Games_Data, Developer, c("Developer", "Co_Developer"), sep = ",")
+
 ## Make count column for Developer
 Clean_Video_Games_Data$Developer <- as.character(Clean_Video_Games_Data$Developer)
 Clean_Video_Games_Data$Dev_Count <- as.numeric(ave(Clean_Video_Games_Data$Developer, Clean_Video_Games_Data$Developer, FUN = length))
+
+## Create a new Developer column that shows which developers have only made 10 or fewer games
+Larger_devs <- Clean_Video_Games_Data %>% count(Developer) %>% filter(n >= 10)
+
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% mutate(Mod_Developer = ifelse(Developer %in% Larger_devs$Developer, Developer, "Small/New Developer"))
 
 ## set seed
 set.seed(8)
@@ -32,14 +44,15 @@ Games_Train <- subset(Clean_Video_Games_Data, split == TRUE)
 Games_Test <- subset(Clean_Video_Games_Data, split == FALSE)
 
 ## Manual Selection
-Games_Mod <- lm(Global_Sales ~ Genre + Critic_Score + User_Score + Rating + Top_20_Devs + Dev_Count , data = Games_Train)
+Games_Mod <- lm(Global_Sales ~ Genre + Critic_Score + User_Score + Rating + Top_20_Devs, data = Games_Train)
 summary(Games_Mod)
 
 # There are possibly better methods of model selection that are done automatically
 
 ## Set the scope of the model fit
-MaxFit <- lm(Global_Sales ~ Genre + Critic_Score + User_Score + Developer + Dev_Count + Rating + Top_20_Devs + Platform, data = Games_Train)
-FitStart <- lm(Global_Sales ~ 1, data = Games_Train)
+
+MaxFit <- lm(log(Global_Sales) ~ Genre + Critic_Score + User_Score + Mod_Developer + Dev_Count + Rating + Top_20_Devs + Platform, data = Games_Train)
+FitStart <- lm(log(Global_Sales) ~ 1, data = Games_Train)
 
 ## Forward selection
 Forward_mod <- step(FitStart, direction = "forward", scope = formula(MaxFit))
@@ -48,25 +61,25 @@ summary(Forward_mod)
 ## Backward Selection
 
 Backward_mod <- step(MaxFit, direction = "backward")
-# Summary for this model is very long, so it is not included here
+```
 
+
+```{r}
 anova(Games_Mod, Forward_mod, Backward_mod)
-
-# Of the three models, the model made with forward selection is comparitively the best
+# Of the three models, the model made with forward selection and backward selection
+# are better
 
 ## prediction on test set
 Games_Test$Predict <- predict(Forward_mod, Games_Test)
 
 ## testing and plotting
 # make a scatterplot using both the predicted and the actual
-ggplot(Games_Test, aes(x = Global_Sales, y = Predict)) +
-  geom_point() +
+Sales_plot <- ggplot(Games_Test, aes(x = Global_Sales, y = Predict, label = Games_Test$Name)) +
+  geom_point(alpha = 0.5) +
   geom_abline(aes(intercept = 0, slope = 1), color = "blue") +
   geom_smooth(method = "lm", color = "red")
-
+ggplotly(Sales_plot)
 
 ## make plots of the residuals
 residualPlot(Forward_mod)
-
 ```
-
