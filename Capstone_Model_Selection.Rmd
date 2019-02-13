@@ -65,7 +65,6 @@ Backward_mod <- step(MaxFit, direction = "backward")
 
 
 ```{r}
-anova(Games_Mod, Forward_mod, Backward_mod)
 # Of the three models, the model made with forward selection and backward selection
 # are better
 
