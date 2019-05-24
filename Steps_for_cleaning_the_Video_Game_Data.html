@@ -130,10 +130,12 @@ $(document).ready(function () {
 
 <div id="view-and-summarise-the-data-to-identify-problems" class="section level2">
 <h2>View and summarise the data to identify problems</h2>
-<pre class="r"><code># load libraries
+<pre class="r"><code>knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+
+# load libraries
 library(tidyverse)</code></pre>
 <pre><code>## Warning: package 'tidyverse' was built under R version 3.4.4</code></pre>
-<pre><code>## -- Attaching packages --------------------------------- tidyverse 1.2.1 --</code></pre>
+<pre><code>## -- Attaching packages ------------------------------------------------ tidyverse 1.2.1 --</code></pre>
 <pre><code>## v ggplot2 3.0.0     v purrr   0.2.5
 ## v tibble  1.4.2     v dplyr   0.7.6
 ## v tidyr   0.8.1     v stringr 1.3.1
@@ -146,7 +148,7 @@ library(tidyverse)</code></pre>
 <pre><code>## Warning: package 'dplyr' was built under R version 3.4.4</code></pre>
 <pre><code>## Warning: package 'stringr' was built under R version 3.4.4</code></pre>
 <pre><code>## Warning: package 'forcats' was built under R version 3.4.4</code></pre>
-<pre><code>## -- Conflicts ------------------------------------ tidyverse_conflicts() --
+<pre><code>## -- Conflicts --------------------------------------------------- tidyverse_conflicts() --
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()</code></pre>
 <pre class="r"><code>library(robotstxt)</code></pre>
@@ -240,12 +242,8 @@ summary(Meta_Critic_Data)</code></pre>
 <div id="join-both-data-sets-to-include-new-variables" class="section level2">
 <h2>Join both data sets to include new variables</h2>
 <pre class="r"><code># Join the original data set with the new scraped meta critic scores.
-Clean_Video_Games_Data &lt;- left_join(Video_Games_Data, Meta_Critic_Data, by= c(&quot;Name&quot;, &quot;Platform&quot;))</code></pre>
-<pre><code>## Warning: Column `Name` joining factors with different levels, coercing to
-## character vector</code></pre>
-<pre><code>## Warning: Column `Platform` joining factors with different levels, coercing
-## to character vector</code></pre>
-<pre class="r"><code>summary(Clean_Video_Games_Data)</code></pre>
+Clean_Video_Games_Data &lt;- left_join(Video_Games_Data, Meta_Critic_Data, by= c(&quot;Name&quot;, &quot;Platform&quot;))
+summary(Clean_Video_Games_Data)</code></pre>
 <pre><code>##      Name             Platform         Year_of_Release          Genre     
 ##  Length:16719       Length:16719       2008   :1427    Action      :3370  
 ##  Class :character   Class :character   2009   :1426    Sports      :2348  
@@ -294,28 +292,72 @@ Clean_Video_Games_Data &lt;- left_join(Video_Games_Data, Meta_Critic_Data, by= c
 <h4>Change “tbd” to “NA”</h4>
 <pre class="r"><code># Summary of the newly joined data set shows about 2400 observations in the User score variable are classified as &quot;tbd&quot;.
 # All the &quot;tbd&quot; observations in the User_Score.x variable should be changed to &quot;NA&quot; because they are essentially missing values in the data.
-Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == &quot;tbd&quot;] &lt;- &quot;&quot;</code></pre>
-<pre><code>## Warning in `[&lt;-.factor`(`*tmp*`, Clean_Video_Games_Data$User_Score.x == :
-## invalid factor level, NA generated</code></pre>
+Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == &quot;tbd&quot;] &lt;- NA
+class(Clean_Video_Games_Data$User_Score.x)</code></pre>
+<pre><code>## [1] &quot;factor&quot;</code></pre>
+<pre class="r"><code>Clean_Video_Games_Data$User_Score.x &lt;- as.numeric(as.character(Clean_Video_Games_Data$User_Score.x))</code></pre>
 <p>First, the user scores from the Video_Games_Data table (User_Score.x) had a special character called “tbd” which means “to be determined” on the Metacritic website and is given to games that haven’t yet been rated, but will. The values with “tbd” are essentially the same as if that observation had a missing value, so all instances of the character “tbd” were changed to a missing value, or an NA.</p>
 </div>
 <div id="replace-any-older-or-missing-values-with-the-newer-scraped-values" class="section level3">
 <h3>Replace any older or missing values with the newer scraped values</h3>
 <pre class="r"><code># Replace any values or NA's in the previous critic and user scores with any newer values.
 Clean_Video_Games_Data$Critic_Score.x &lt;- ifelse(is.na(Clean_Video_Games_Data$Critic_Score.y), Clean_Video_Games_Data$Critic_Score.x, Clean_Video_Games_Data$Critic_Score.y)
-Clean_Video_Games_Data$User_Score.x &lt;- ifelse(is.na(Clean_Video_Games_Data$User_Score.y), Clean_Video_Games_Data$User_Score.x, Clean_Video_Games_Data$User_Score.y)
-# Summary shows that about 260 and 330 NA's from the critic and user scores were replaced, respectively.</code></pre>
+Clean_Video_Games_Data$User_Score.x &lt;- ifelse(is.na(Clean_Video_Games_Data$User_Score.y),
+                                              Clean_Video_Games_Data$User_Score.x,
+                                              Clean_Video_Games_Data$User_Score.y)
+summary(Clean_Video_Games_Data)</code></pre>
+<pre><code>##      Name             Platform         Year_of_Release          Genre     
+##  Length:16719       Length:16719       2008   :1427    Action      :3370  
+##  Class :character   Class :character   2009   :1426    Sports      :2348  
+##  Mode  :character   Mode  :character   2010   :1255    Misc        :1750  
+##                                        2007   :1197    Role-Playing:1500  
+##                                        2011   :1136    Shooter     :1323  
+##                                        2006   :1006    (Other)     :6426  
+##                                        (Other):9272    NA's        :   2  
+##                         Publisher        NA_Sales          EU_Sales     
+##  Electronic Arts             : 1356   Min.   : 0.0000   Min.   : 0.000  
+##  Activision                  :  985   1st Qu.: 0.0000   1st Qu.: 0.000  
+##  Namco Bandai Games          :  939   Median : 0.0800   Median : 0.020  
+##  Ubisoft                     :  933   Mean   : 0.2633   Mean   : 0.145  
+##  Konami Digital Entertainment:  834   3rd Qu.: 0.2400   3rd Qu.: 0.110  
+##  THQ                         :  715   Max.   :41.3600   Max.   :28.960  
+##  (Other)                     :10957                                     
+##     JP_Sales        Other_Sales        Global_Sales     Critic_Score.x 
+##  Min.   : 0.0000   Min.   : 0.00000   Min.   : 0.0100   Min.   :13.00  
+##  1st Qu.: 0.0000   1st Qu.: 0.00000   1st Qu.: 0.0600   1st Qu.:60.00  
+##  Median : 0.0000   Median : 0.01000   Median : 0.1700   Median :71.00  
+##  Mean   : 0.0776   Mean   : 0.04733   Mean   : 0.5335   Mean   :69.06  
+##  3rd Qu.: 0.0400   3rd Qu.: 0.03000   3rd Qu.: 0.4700   3rd Qu.:79.00  
+##  Max.   :10.2200   Max.   :10.57000   Max.   :82.5300   Max.   :98.00  
+##                                                         NA's   :8321   
+##   Critic_Count     User_Score.x     User_Count          Developer   
+##  Min.   :  3.00   Min.   :0.000   Min.   :    4.0   Ubisoft  : 204  
+##  1st Qu.: 12.00   1st Qu.:6.400   1st Qu.:   10.0   EA Sports: 172  
+##  Median : 21.00   Median :7.500   Median :   24.0   EA Canada: 167  
+##  Mean   : 26.36   Mean   :7.121   Mean   :  162.2   Konami   : 162  
+##  3rd Qu.: 36.00   3rd Qu.:8.200   3rd Qu.:   81.0   Capcom   : 139  
+##  Max.   :113.00   Max.   :9.700   Max.   :10665.0   (Other)  :9252  
+##  NA's   :8582     NA's   :8796    NA's   :9129      NA's     :6623  
+##      Rating     Critic_Score.y   User_Score.y  
+##  E      :3991   Min.   :17.00   Min.   :0.500  
+##  T      :2961   1st Qu.:63.00   1st Qu.:6.600  
+##  M      :1563   Median :73.00   Median :7.500  
+##  E10+   :1420   Mean   :71.28   Mean   :7.216  
+##  EC     :   8   3rd Qu.:81.00   3rd Qu.:8.200  
+##  (Other):   7   Max.   :98.00   Max.   :9.000  
+##  NA's   :6769   NA's   :11657   NA's   :11657</code></pre>
+<pre class="r"><code># Summary shows that about 260 and 330 NA's from the critic and user scores were replaced, respectively.</code></pre>
 <p>Next, any older values or missing values the Critic_Score.x and User_Score.x variables (from Video_Games_Data) are replaced by any values that aren’t missing from the Critic_Score.y and User_Score.y variables (from Meta_Critic_Data) using an ifelse function. Unfortunately, this only results in about 300 observations of missing values to be replaced with new values for both variables.</p>
 </div>
 <div id="filter-out-any-missing-values-for-important-variables" class="section level3">
 <h3>Filter out any missing values for important variables</h3>
 <pre class="r"><code># Starting with filtering the missing values from the user scores
-Clean_Video_Games_Data &lt;- Clean_Video_Games_Data %&gt;% filter(!is.na(User_Score.x))</code></pre>
-<pre><code>## Warning: package 'bindrcpp' was built under R version 3.4.4</code></pre>
-<pre class="r"><code># Summary shows that by filtering out the NA's for user scores first leaves 572, 263, and 343 NA's for critic score, developer, and rating, respectively, with 7923 observations remaining.
+Clean_Video_Games_Data &lt;- Clean_Video_Games_Data %&gt;% filter(!is.na(User_Score.x))
+# Summary shows that by filtering out the NA's for user scores first leaves 572, 263, and 343 NA's for critic score, developer, and rating, respectively, with 7923 observations remaining.
 
 # Filter the missing values from critic scores.
 Clean_Video_Games_Data &lt;- Clean_Video_Games_Data %&gt;% filter(!is.na(Critic_Score.x))
+
 # Filtering the missing values from both leaves 256 and 327 NA's for developer and rating, respectively, with 7351 observations remaining. 
 
 # Further filtering the data set by rating will remove all missing values from key variables.
@@ -325,12 +367,55 @@ Clean_Video_Games_Data &lt;- Clean_Video_Games_Data %&gt;% filter(!is.na(Rating)
 <div id="remove-extraneous-variables-and-rename-essential-variables" class="section level3">
 <h3>Remove extraneous variables and rename essential variables</h3>
 <pre class="r"><code># Remove extraneous variables: Critic_Score.y and User_Score.y
-Clean_Video_Games_Data &lt;- subset(Clean_Video_Games_Data, select = -c(Critic_Score.y, User_Score.y))
+Clean_Video_Games_Data &lt;- select(Clean_Video_Games_Data, -c(Critic_Score.y, User_Score.y))
 
 # Finish cleaning up by changing Critic_Score.x and User_Score.x to Critic_Score and User_Score, respectively.
 colnames(Clean_Video_Games_Data)[11] &lt;- &quot;Critic_Score&quot;
-colnames(Clean_Video_Games_Data)[13] &lt;- &quot;User_Score&quot;</code></pre>
-<p>Finally, the extraneous variables Critic_Score.y and User_Score.y are removed from the data and the variables Critic_Score.x and User_Score.x are renamed into Critic_Score and User_Score, respectively. The final cleaned data set contains 7024 observations.</p>
+colnames(Clean_Video_Games_Data)[13] &lt;- &quot;User_Score&quot;
+
+# Upon further inspection, the rating &quot;K-A&quot; is outdated and officially became &quot;E&quot; according to the ESRB.
+Clean_Video_Games_Data %&gt;% filter(Rating == &quot;K-A&quot;)</code></pre>
+<pre><code>##                 Name Platform Year_of_Release Genre
+## 1 PaRappa The Rapper       PS            1996  Misc
+##                     Publisher NA_Sales EU_Sales JP_Sales Other_Sales
+## 1 Sony Computer Entertainment     0.26     0.16     1.46        0.03
+##   Global_Sales Critic_Score Critic_Count User_Score User_Count  Developer
+## 1         1.92           92           15        7.4         48 NanaOn-Sha
+##   Rating
+## 1    K-A</code></pre>
+<pre class="r"><code>Clean_Video_Games_Data$Rating[Clean_Video_Games_Data$Rating == &quot;K-A&quot;] &lt;- &quot;E&quot;
+
+# The rating &quot;RP&quot; stands for rating pending and is not helpful in our dataset
+Clean_Video_Games_Data %&gt;% filter(Rating == &quot;RP&quot;)</code></pre>
+<pre><code>##                      Name Platform Year_of_Release    Genre
+## 1       Clockwork Empires       PC             N/A Strategy
+## 2 Supreme Ruler: Cold War       PC            2011 Strategy
+##             Publisher NA_Sales EU_Sales JP_Sales Other_Sales Global_Sales
+## 1             Unknown        0     0.04        0        0.00         0.04
+## 2 Paradox Interactive        0     0.03        0        0.01         0.03
+##   Critic_Score Critic_Count User_Score User_Count          Developer
+## 1           58            7        3.5          5      Gaslamp Games
+## 2           63           12        6.8         27 BattleGoat Studios
+##   Rating
+## 1     RP
+## 2     RP</code></pre>
+<pre class="r"><code>Clean_Video_Games_Data &lt;- Clean_Video_Games_Data %&gt;% filter(!Rating == &quot;RP&quot;)
+
+# There is a special circumstance for the unique &quot;AO&quot; rating in the dataset that should change to an &quot;M&quot; rating.
+Clean_Video_Games_Data %&gt;% filter(Rating == &quot;AO&quot;)</code></pre>
+<pre><code>##                            Name Platform Year_of_Release  Genre
+## 1 Grand Theft Auto: San Andreas       XB            2005 Action
+##              Publisher NA_Sales EU_Sales JP_Sales Other_Sales Global_Sales
+## 1 Take-Two Interactive     1.26     0.61        0        0.09         1.95
+##   Critic_Score Critic_Count User_Score User_Count      Developer Rating
+## 1           93           58        8.6        118 Rockstar North     AO</code></pre>
+<pre class="r"><code>Clean_Video_Games_Data$Rating[Clean_Video_Games_Data$Rating == &quot;AO&quot;] &lt;- &quot;M&quot;
+
+# Remove the outliers
+Clean_Video_Games_Data &lt;- Clean_Video_Games_Data %&gt;% filter(Global_Sales &lt;= 20)
+
+# There are 7009 total remaining observations in the data set.</code></pre>
+<p>Finally, the extraneous variables Critic_Score.y and User_Score.y are removed from the data and the variables Critic_Score.x and User_Score.x are renamed into Critic_Score and User_Score, respectively. Later in the analysis, it was discovered that there were outlier observations and categories in the “Rating” variable that needed to be removed or changed. The final cleaned data set contains 7009 observations.</p>
 </div>
 </div>
 
