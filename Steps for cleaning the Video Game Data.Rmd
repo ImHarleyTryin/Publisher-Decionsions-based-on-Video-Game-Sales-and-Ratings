@@ -52,6 +52,8 @@ summary(Clean_Video_Games_Data)
 # Summary of the newly joined data set shows about 2400 observations in the User score variable are classified as "tbd".
 # All the "tbd" observations in the User_Score.x variable should be changed to "NA" because they are essentially missing values in the data.
 Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == "tbd"] <- NA
+class(Clean_Video_Games_Data$User_Score.x)
+Clean_Video_Games_Data$User_Score.x <- as.numeric(as.character(Clean_Video_Games_Data$User_Score.x))
 
 ```
 
@@ -61,9 +63,12 @@ Clean_Video_Games_Data$User_Score.x[Clean_Video_Games_Data$User_Score.x == "tbd"
 ```{r}
 # Replace any values or NA's in the previous critic and user scores with any newer values.
 Clean_Video_Games_Data$Critic_Score.x <- ifelse(is.na(Clean_Video_Games_Data$Critic_Score.y), Clean_Video_Games_Data$Critic_Score.x, Clean_Video_Games_Data$Critic_Score.y)
-Clean_Video_Games_Data$User_Score.x <- ifelse(is.na(Clean_Video_Games_Data$User_Score.y), Clean_Video_Games_Data$User_Score.x, Clean_Video_Games_Data$User_Score.y)
-# Summary shows that about 260 and 330 NA's from the critic and user scores were replaced, respectively.
+Clean_Video_Games_Data$User_Score.x <- ifelse(is.na(Clean_Video_Games_Data$User_Score.y),
+                                              Clean_Video_Games_Data$User_Score.x,
+                                              Clean_Video_Games_Data$User_Score.y)
+summary(Clean_Video_Games_Data)
 
+# Summary shows that about 260 and 330 NA's from the critic and user scores were replaced, respectively.
 ```
 
   Next, any older values or missing values the Critic_Score.x and User_Score.x variables (from Video_Games_Data) are replaced by any values that aren’t missing from the Critic_Score.y and User_Score.y variables (from Meta_Critic_Data) using an ifelse function. Unfortunately, this only results in about 300 observations of missing values to be replaced with new values for both variables.
@@ -76,6 +81,7 @@ Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(User_Score.x)
 
 # Filter the missing values from critic scores.
 Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!is.na(Critic_Score.x))
+
 # Filtering the missing values from both leaves 256 and 327 NA's for developer and rating, respectively, with 7351 observations remaining. 
 
 # Further filtering the data set by rating will remove all missing values from key variables.
@@ -105,11 +111,14 @@ Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!Rating == "RP")
 Clean_Video_Games_Data %>% filter(Rating == "AO")
 Clean_Video_Games_Data$Rating[Clean_Video_Games_Data$Rating == "AO"] <- "M"
 
-# Remove the outlier for global sales "Wii Sports"
-Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(!Name == "Wii Sports")
+# Remove the outliers
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% filter(Global_Sales <= 20)
+
+# There are 7009 total remaining observations in the data set.
+
 ```
 
-  Finally, the extraneous variables Critic_Score.y and User_Score.y are removed from the data and the variables Critic_Score.x and User_Score.x are renamed into Critic_Score and User_Score, respectively. The rating "K-A" is outdated according to the ESRB so the rating is changed to "E". The rating "RP" stands for rating pending and is not helpful in the data set and is removed. The single observation that is rated "AO" is a special circumstance and should be changed to an "M" rating. The game "Wii Sports" is a special outlier that should be removed from the data set becuase is a bundgled game. The final cleaned data set contains 7021 observations.
+  Finally, the extraneous variables Critic_Score.y and User_Score.y are removed from the data and the variables Critic_Score.x and User_Score.x are renamed into Critic_Score and User_Score, respectively. Later in the analysis, it was discovered that there were outlier observations and categories in the "Rating" variable that needed to be removed or changed. The final cleaned data set contains 7009 observations.
 
 
 
