@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r, include=FALSE, warning=FALSE}
-## Install and load neccessary packages
+# Install and load neccessary packages
 library(caTools)
 library(tidyverse)
 library(caret)
@@ -19,59 +19,92 @@ library(plotly)
 ```
 
 
-
 ```{r}
+# Load csv file
 Clean_Video_Games_Data <- read.csv2("Clean_Video_Games_Data.csv")
 
-## Create a Co-Developer column
-Clean_Video_Games_Data <- separate(Clean_Video_Games_Data, Developer, c("Developer", "Co_Developer"), sep = ",")
-
-## Make count column for Developer
-Clean_Video_Games_Data$Developer <- as.character(Clean_Video_Games_Data$Developer)
-Clean_Video_Games_Data$Dev_Count <- as.numeric(ave(Clean_Video_Games_Data$Developer, Clean_Video_Games_Data$Developer, FUN = length))
-
-## Create a new Developer column that shows which developers have only made 10 or fewer games
-Larger_devs <- Clean_Video_Games_Data %>% count(Developer) %>% filter(n >= 10)
-
-Clean_Video_Games_Data <- Clean_Video_Games_Data %>% mutate(Mod_Developer = ifelse(Developer %in% Larger_devs$Developer, Developer, "Small/New Developer"))
-
-## set seed
+# set seed
 set.seed(8)
 
-## Split data into testing and training
+# Change Global_Sales variable into millions
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% mutate(Global_Sales = Global_Sales * 1000000)
+```
+  
+  Before selecting a model for analysis, it could be useful to create some variables that detail the development of games and the role that co-developers play. From the developer variable, a co-developer variable and a count for that variable are made. Also, another developer variable is made that only shows the names of developers that have made more than 10 games.
+```{r}
+## Create any other variables that could be used for later analysis
+
+# Create the co developer column from the developer column
+Clean_Video_Games_Data <- separate(Clean_Video_Games_Data, Developer, c("Developer", "Co_Developer"), sep = ",")
+Clean_Video_Games_Data$Co_Developer <- ifelse(is.na(Clean_Video_Games_Data$Co_Developer), "None", Clean_Video_Games_Data$Co_Developer)
+
+# Make count column for Developer
+Clean_Video_Games_Data$Developer <- as.character(Clean_Video_Games_Data$Developer)
+Clean_Video_Games_Data$Dev_Count <- as.numeric(ave(Clean_Video_Games_Data$Developer, Clean_Video_Games_Data$Developer, FUN = length))
+Clean_Video_Games_Data$Co_Developer <- as.character(Clean_Video_Games_Data$Co_Developer)
+Clean_Video_Games_Data$Co_Dev_Count <- as.numeric(ave(Clean_Video_Games_Data$Co_Developer, Clean_Video_Games_Data$Co_Developer, FUN = length))
+
+Clean_Video_Games_Data$Co_Dev_Count <- ifelse(Clean_Video_Games_Data$Co_Developer == "None", 0, Clean_Video_Games_Data$Co_Dev_Count)
+
+# Create a new Developer column that shows which developers have only made 10 or fewer games
+Larger_devs <- Clean_Video_Games_Data %>% count(Developer) %>% filter(n >= 10)
+Clean_Video_Games_Data <- Clean_Video_Games_Data %>% mutate(Mod_Developer = ifelse(Developer %in% Larger_devs$Developer, Developer, "Small/New Developer"))
+
+```
+
+## Model Selection
+  To start the model selection process, the data is split into a testing and training set. The training set contains 80 percent of the data, while the test set contains the remaining 20 percent. 
+```{r}
+# Split data into testing and training
 split <- sample.split(Clean_Video_Games_Data$Global_Sales, SplitRatio = 0.8)
 Games_Train <- subset(Clean_Video_Games_Data, split == TRUE)
 Games_Test <- subset(Clean_Video_Games_Data, split == FALSE)
 
-## Manual Selection
+```
+
+  First, a model is selected manually using "Global_Sales" as the dependent variable and 5 other variables as the independent variables from the training set.
+```{r}
+# Manual Selection
 Games_Mod <- lm(Global_Sales ~ Genre + Critic_Score + User_Score + Rating + Top_20_Devs, data = Games_Train)
 summary(Games_Mod)
 
 # There are possibly better methods of model selection that are done automatically
+```
 
-## Set the scope of the model fit
+  The first model could be improved upon, therefore, an automated model selection process is used to find the best model possible. The scope of the model is set to possibly include any variable that could explain the global sales of games. 
+```{r}
+# Set the scope of the model fit
 
 MaxFit <- lm(log(Global_Sales) ~ Genre + Critic_Score + User_Score + Mod_Developer + Dev_Count + Rating + Top_20_Devs + Platform, data = Games_Train)
 FitStart <- lm(log(Global_Sales) ~ 1, data = Games_Train)
+```
 
-## Forward selection
+  Both forward selection and backward selection are used to find the best model. Both methods returned the same model.
+```{r}
+# Forward selection
 Forward_mod <- step(FitStart, direction = "forward", scope = formula(MaxFit))
 summary(Forward_mod)
 
-## Backward Selection
+# Backward Selection
 
 Backward_mod <- step(MaxFit, direction = "backward")
 ```
 
-
+  The model selected through backward selection is validated by checking the residual plot of the model. The residual plot shows that the residuals are random and have distinct patterns. 
 ```{r}
-# Of the three models, the model made with forward selection and backward selection
-# are better
+# Of the three models, the model made with forward selection and backward selection are better
 
-## prediction on test set
-Games_Test$Predict <- predict(Forward_mod, Games_Test)
+# make plots of the residuals to validate the selected model
+residualPlot(Forward_mod)
+```
 
-## testing and plotting
+## Model Prediction and Testing
+  Using the validated model, a prediction is made on the test set to test the accuracy of the prediciton.
+```{r}
+# prediction on test set
+Games_Test$Predict <- predict(Backward_mod, Games_Test)
+
+# testing and plotting
 # make a scatterplot using both the predicted and the actual
 Sales_plot <- ggplot(Games_Test, aes(x = Global_Sales, y = Predict, label = Games_Test$Name)) +
   geom_point(alpha = 0.5) +
@@ -79,6 +112,5 @@ Sales_plot <- ggplot(Games_Test, aes(x = Global_Sales, y = Predict, label = Game
   geom_smooth(method = "lm", color = "red")
 ggplotly(Sales_plot)
 
-## make plots of the residuals
-residualPlot(Forward_mod)
+summary(Backward_mod)
 ```
